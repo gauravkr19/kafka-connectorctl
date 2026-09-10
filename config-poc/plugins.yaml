@@ -1,0 +1,14 @@
+apiVersion: connectorctl.io/v1alpha1
+
+plugins:
+  postgres:
+    classes:
+      - io.debezium.connector.postgresql.PostgresConnector
+    type: source
+    defaultConnectProfile: default
+    sensitive:
+      - database.user
+      - database.password
+      - database.sslpassword
+    sensitivePatterns:
+      - '(?i)^database\..*(password|secret|token)$'

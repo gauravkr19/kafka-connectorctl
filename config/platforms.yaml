@@ -1,0 +1,172 @@
+apiVersion: connectorctl.io/v1alpha1
+clusters:
+  dev:
+    enabled: true
+    namespace: dev-datalake
+    gitRoot: connectors/dev
+    argoApplication: kafka-connectors-dev
+    logicalEnvironments:
+      dev:
+        nameRegex: '^ngil-(?i:dev)-'
+        defaultConnectProfile: default
+      sit:
+        nameRegex: '^ngil-(?i:sit)-'
+        defaultConnectProfile: default        
+      sys:
+        nameRegex: '^ngil-(?i:sys)-'
+        defaultConnectProfile: default
+      e2e:
+        nameRegex: '^ngil-(?i:e2e)-'
+        defaultConnectProfile: default
+      e2e2:
+        nameRegex: '^ngil-(?i:e2e2)-'
+        defaultConnectProfile: default
+      prf:
+        nameRegex: '^ngil-(?i:prf)-'
+        defaultConnectProfile: default
+    connectProfiles:
+      default:
+        # Existing general-purpose Connect CR. Whole-environment ADOPT searches
+        # profiles marked adoptionSource.
+        adoptionSource: true
+        rest:
+          baseURL: https://kafka-connect-dev.example.invalid
+          auth:
+            type: basic
+            usernameEnv: CONNECT_DEV_USER
+            passwordEnv: CONNECT_DEV_PASSWORD
+          tls:
+            insecureSkipVerify: false
+          timeout: 30s
+          rps: 12
+          burst: 12
+          retries: 4
+        connectClusterRef:
+          name: connect-dev
+          namespace: dev-datalake
+        # Keep this when your CFK installation requires authenticated REST
+        # access even though connectClusterRef is also present.
+        connectRest:
+          endpoint: https://kafka-connect-dev.example.invalid
+          authentication:
+            type: bearer
+            bearer:
+              secretRef: v2-kafka-apikeys
+        restartPolicy:
+          type: OnFailure
+          maxRetry: 10
+      db-rotating:
+        adoptionSource: false
+        rest:
+          baseURL: https://kafka-connect-db-dev.example.invalid
+          auth:
+            type: basic
+            usernameEnv: CONNECT_DEV_DB_USER
+            passwordEnv: CONNECT_DEV_DB_PASSWORD
+          tls:
+            insecureSkipVerify: false
+          timeout: 30s
+          rps: 8
+          burst: 8
+          retries: 4
+        connectClusterRef:
+          name: connect-dev-db
+          namespace: dev-datalake
+        connectRest:
+          endpoint: https://kafka-connect-db-dev.example.invalid
+          authentication:
+            type: bearer
+            bearer:
+              secretRef: v2-kafka-apikeys
+        restartPolicy:
+          type: OnFailure
+          maxRetry: 10
+
+  preprod:
+    enabled: true
+    namespace: preprod-datalake
+    gitRoot: connectors/preprod
+    argoApplication: kafka-connectors-preprod
+    logicalEnvironments:
+      reg:
+        nameRegex: '^ngil-(?i:reg)-'
+        defaultConnectProfile: default
+      pps:
+        nameRegex: '^ngil-(?i:pps)-'
+        defaultConnectProfile: default
+      ide:
+        nameRegex: '^ngil-(?i:ide)-'
+        defaultConnectProfile: default
+    connectProfiles:
+      default:
+        adoptionSource: true
+        rest:
+          baseURL: https://kafka-connect-preprod.example.invalid
+          auth:
+            type: basic
+            usernameEnv: CONNECT_PREPROD_USER
+            passwordEnv: CONNECT_PREPROD_PASSWORD
+          tls:
+            insecureSkipVerify: false
+          timeout: 30s
+          rps: 12
+          burst: 12
+          retries: 4
+        connectClusterRef:
+          name: connect-preprod
+          namespace: preprod-datalake
+        connectRest:
+          endpoint: https://kafka-connect-preprod.example.invalid
+          authentication:
+            type: bearer
+            bearer:
+              secretRef: v2-kafka-apikeys
+        restartPolicy:
+          type: OnFailure
+          maxRetry: 10
+      db-rotating:
+        adoptionSource: false
+        rest:
+          baseURL: https://kafka-connect-db-preprod.example.invalid
+          auth:
+            type: basic
+            usernameEnv: CONNECT_PREPROD_DB_USER
+            passwordEnv: CONNECT_PREPROD_DB_PASSWORD
+          tls:
+            insecureSkipVerify: false
+          timeout: 30s
+          rps: 8
+          burst: 8
+          retries: 4
+        connectClusterRef:
+          name: connect-preprod-db
+          namespace: preprod-datalake
+        connectRest:
+          endpoint: https://kafka-connect-db-preprod.example.invalid
+          authentication:
+            type: bearer
+            bearer:
+              secretRef: v2-kafka-apikeys
+        restartPolicy:
+          type: OnFailure
+          maxRetry: 10
+
+  prod:
+    enabled: false
+    namespace: prod-datalake
+    gitRoot: connectors/prod
+    argoApplication: kafka-connectors-prod
+    logicalEnvironments:
+      prod:
+        nameRegex: '^ngil-(?i:prod)-'
+        defaultConnectProfile: default
+    connectProfiles:
+      default:
+        adoptionSource: true
+        rest:
+          baseURL: https://replace-before-enabling.example.invalid
+          auth:
+            type: none
+        connectClusterRef:
+          name: connect-prod
+          namespace: prod-datalake

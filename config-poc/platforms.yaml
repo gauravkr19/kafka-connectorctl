@@ -1,0 +1,35 @@
+apiVersion: connectorctl.io/v1alpha1
+clusters:
+  poc:
+    enabled: true
+    namespace: confluent-poc
+    gitRoot: connectors/poc
+    argoApplication: connectorctl-poc
+    logicalEnvironments:
+      lab:
+        nameRegex: '^.+$'
+        defaultConnectProfile: default
+      sit:
+        nameRegex: '^ngil-(?i:sit)-'
+        defaultConnectProfile: default
+    connectProfiles:
+      default:
+        adoptionSource: true
+        rest:
+          baseURL: http://127.0.0.1:8083
+          auth:
+            type: basic
+            usernameEnv: CONNECT_POC_USER
+            passwordEnv: CONNECT_POC_PASSWORD
+          tls:
+            insecureSkipVerify: false
+          timeout: 30s
+          rps: 5
+          burst: 5
+          retries: 3
+        connectClusterRef:
+          name: connect
+          namespace: confluent-poc
+        restartPolicy:
+          type: OnFailure
+          maxRetry: 5

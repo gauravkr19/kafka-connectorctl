@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kafka-connectors-dev
+  namespace: openshift-gitops
+spec:
+  project: devsecops-tools
+  source:
+    repoURL: REPLACE_ME
+    targetRevision: main
+    path: connectors/dev
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dev-datalake
+  # Start with manual sync and pruning disabled during adoption.
+  syncPolicy:
+    syncOptions:
+      - RespectIgnoreDifferences=true
+  ignoreDifferences:
+    - group: platform.confluent.io
+      kind: Connector
+      jsonPointers:
+        - /metadata/annotations/platform.confluent.io~1pause-connector
+        - /metadata/annotations/platform.confluent.io~1resume-connector
+        - /metadata/annotations/platform.confluent.io~1restart-connector
+        - /metadata/annotations/platform.confluent.io~1restart-task

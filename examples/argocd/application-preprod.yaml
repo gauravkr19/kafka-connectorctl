@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kafka-connectors-preprod
+  namespace: openshift-gitops
+spec:
+  project: devsecops-tools
+  source:
+    repoURL: REPLACE_ME
+    targetRevision: main
+    path: connectors/preprod
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: preprod-datalake
+  syncPolicy:
+    syncOptions:
+      - RespectIgnoreDifferences=true
+  ignoreDifferences:
+    - group: platform.confluent.io
+      kind: Connector
+      jsonPointers:
+        - /metadata/annotations/platform.confluent.io~1pause-connector
+        - /metadata/annotations/platform.confluent.io~1resume-connector
+        - /metadata/annotations/platform.confluent.io~1restart-connector
+        - /metadata/annotations/platform.confluent.io~1restart-task

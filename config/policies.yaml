@@ -1,0 +1,38 @@
+apiVersion: connectorctl.io/v1alpha1
+defaults:
+  concurrency: 8
+  maxConcurrency: 24
+  batchSize: 10
+adoption:
+  maxBatchSize: 25
+  # false still permits --all-env in bounded batches. Only --unsafe-all is
+  # blocked, so initial migration remains controlled.
+  allowWholeEnvironment: false
+  requireFunctionalDiff: true
+create:
+  requireDryRun: true
+  requireChangeTicket: false
+update:
+  requireDryRun: true
+  requireChangeTicket: false
+delete:
+  requireManualApproval: true
+  requireChangeTicket: true
+validation:
+  verifyPluginInstalled: true
+  validateAgainstConnectAPI: true
+  serverDryRun: false
+  rejectPlaintextSecrets: true
+  genericSensitivePatterns:
+    - '(?i)(^|[._-])(password|passwd|secret|token|api[._-]?key|private[._-]?key)([._-]|$)'
+operations:
+  allowed:
+    - status
+    - pause
+    - resume
+    - restart
+    - restart-task
+approvals:
+  dev: manual-during-migration
+  preprod: manual
+  prod: manual

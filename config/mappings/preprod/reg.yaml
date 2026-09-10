@@ -1,0 +1,2 @@
+apiVersion: connectorctl.io/v1alpha1
+connectors: {}

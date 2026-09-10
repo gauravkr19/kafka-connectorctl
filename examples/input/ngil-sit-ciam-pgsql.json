@@ -1,0 +1,9 @@
+{
+  "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+  "tasks.max": "1",
+  "database.hostname": "postgres-sit.example.internal",
+  "database.port": "5432",
+  "database.user": "replace-at-conversion-time",
+  "database.password": "replace-at-conversion-time",
+  "topic.prefix": "ciam"
+}

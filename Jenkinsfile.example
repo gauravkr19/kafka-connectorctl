@@ -1,0 +1,124 @@
+pipeline {
+  agent { label 'golang-oc-git' }
+
+  parameters {
+    choice(name: 'ACTION', choices: ['ADOPT', 'CREATE', 'UPDATE', 'MIGRATE', 'DELETE', 'STATUS', 'PAUSE', 'RESUME', 'RESTART', 'RESTART_TASK'])
+    choice(name: 'PHYSICAL_CLUSTER', choices: ['dev', 'preprod'])
+    string(name: 'LOGICAL_ENV', defaultValue: 'sit')
+    choice(name: 'SELECTOR_MODE', choices: ['SINGLE', 'LIST', 'CSV', 'ENVIRONMENT'])
+    text(name: 'CONNECTORS', defaultValue: '')
+    string(name: 'NAMES_FILE', defaultValue: '')
+    string(name: 'INPUT_PATH', defaultValue: '')
+    string(name: 'SOURCE_CLUSTER', defaultValue: 'dev')
+    string(name: 'SOURCE_ENV', defaultValue: 'sit')
+    string(name: 'MIGRATION_PLAN', defaultValue: '')
+    string(name: 'CHANGE_TICKET', defaultValue: '')
+    string(name: 'TASK_ID', defaultValue: '-1')
+    string(name: 'BATCH_SIZE', defaultValue: '10')
+    string(name: 'BATCH_OFFSET', defaultValue: '0')
+    booleanParam(name: 'DRY_RUN_ONLY', defaultValue: true)
+  }
+
+  environment {
+    TOOL = './bin/connectorctl'
+  }
+
+  stages {
+    stage('Build and test') {
+      steps {
+        sh 'make check build'
+        sh '${TOOL} config-validate'
+      }
+    }
+
+    stage('Execute') {
+      steps {
+        withCredentials([
+          usernamePassword(credentialsId: 'connect-dev-rest', usernameVariable: 'CONNECT_DEV_USER', passwordVariable: 'CONNECT_DEV_PASSWORD'),
+          usernamePassword(credentialsId: 'connect-dev-db-rest', usernameVariable: 'CONNECT_DEV_DB_USER', passwordVariable: 'CONNECT_DEV_DB_PASSWORD'),
+          usernamePassword(credentialsId: 'connect-preprod-rest', usernameVariable: 'CONNECT_PREPROD_USER', passwordVariable: 'CONNECT_PREPROD_PASSWORD'),
+          usernamePassword(credentialsId: 'connect-preprod-db-rest', usernameVariable: 'CONNECT_PREPROD_DB_USER', passwordVariable: 'CONNECT_PREPROD_DB_PASSWORD')
+        ]) {
+          script {
+            // Quote every user-controlled argument before it reaches /bin/sh.
+            def q = { Object value ->
+              "'" + value.toString().replace("'", "'\"'\"'") + "'"
+            }
+            def command = [env.TOOL]
+            def selector = []
+            if (params.SELECTOR_MODE == 'ENVIRONMENT') {
+              selector << '--all-env'
+            } else if (params.SELECTOR_MODE == 'CSV') {
+              selector += ['--names-file', params.NAMES_FILE]
+            } else {
+              def names = params.CONNECTORS.split(/[\n,]+/).collect { it.trim() }.findAll { it }
+              names.each { selector += ['--name', it] }
+            }
+            def batch = ['--batch-size', params.BATCH_SIZE, '--batch-offset', params.BATCH_OFFSET]
+            def writeArgs = params.DRY_RUN_ONLY ? [] : ['--server-dry-run', '--write']
+            def ticket = params.CHANGE_TICKET ? ['--ticket', params.CHANGE_TICKET] : []
+
+            switch (params.ACTION) {
+              case 'ADOPT':
+                command += ['adopt', '--cluster', params.PHYSICAL_CLUSTER, '--env', params.LOGICAL_ENV]
+                command += selector + batch + ['--validate-live'] + ticket + writeArgs
+                break
+              case 'CREATE':
+              case 'UPDATE':
+                command += [params.ACTION.toLowerCase(), '--cluster', params.PHYSICAL_CLUSTER, '--env', params.LOGICAL_ENV,
+                            '--input', params.INPUT_PATH]
+                command += batch + ['--validate-live'] + ticket + writeArgs
+                break
+              case 'MIGRATE':
+                command += ['migrate', '--source-cluster', params.SOURCE_CLUSTER, '--source-env', params.SOURCE_ENV,
+                            '--target-cluster', params.PHYSICAL_CLUSTER, '--target-env', params.LOGICAL_ENV]
+                command += selector + batch
+                if (params.MIGRATION_PLAN) {
+                  command += ['--plan', params.MIGRATION_PLAN]
+                }
+                command += ['--validate-live'] + ticket + writeArgs
+                break
+              case 'DELETE':
+                command += ['delete', '--cluster', params.PHYSICAL_CLUSTER, '--env', params.LOGICAL_ENV]
+                command += selector + batch + ticket
+                if (!params.DRY_RUN_ONLY) {
+                  command += ['--confirm-delete', '--write']
+                }
+                break
+              default:
+                def operation = params.ACTION.toLowerCase().replace('_', '-')
+                command += ['ops', '--cluster', params.PHYSICAL_CLUSTER, '--env', params.LOGICAL_ENV,
+                            '--operation', operation]
+                command += selector + batch
+                if (params.ACTION == 'RESTART_TASK') {
+                  command += ['--task-id', params.TASK_ID]
+                }
+                if (!params.DRY_RUN_ONLY) {
+                  command << '--write'
+                }
+            }
+
+            sh(label: 'connectorctl', script: "set +x\n${command.collect(q).join(' ')}")
+          }
+        }
+      }
+    }
+
+    stage('Validate worktree') {
+      when { expression { !params.DRY_RUN_ONLY && !['STATUS', 'PAUSE', 'RESUME', 'RESTART', 'RESTART_TASK'].contains(params.ACTION) } }
+      steps {
+        sh '${TOOL} repo-validate'
+        sh 'git diff --check'
+        sh 'git status --short'
+        // Create a branch/commit/MR here through the client-approved shared library.
+        // Do not run oc apply for Connector deployment.
+      }
+    }
+  }
+
+  post {
+    always {
+      archiveArtifacts artifacts: 'reports/**/*.json,rendered/**/*.yaml', allowEmptyArchive: true
+    }
+  }
+}

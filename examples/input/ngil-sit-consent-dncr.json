@@ -1,0 +1,9 @@
+{
+  "name": "ngil-sit-consent-dncr",
+  "config": {
+    "connector.class": "io.confluent.connect.http.HttpSinkConnector",
+    "tasks.max": "1",
+    "topics": "ngil-sit-consent",
+    "http.api.url": "https://consent-sit.example.internal/api"
+  }
+}

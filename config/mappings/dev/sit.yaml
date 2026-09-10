@@ -1,0 +1,15 @@
+apiVersion: connectorctl.io/v1alpha1
+connectors:
+  ngil-sit-ciam-pgsql:
+    # For ADOPT, omit connectProfile so connectorctl preserves the profile on
+    # which the connector currently runs. Set it for a subsequent CREATE or a
+    # controlled profile-relocation design, not during pure adoption.
+    fields:
+      database.user:
+        profile: vault-db-static
+        secretName: sit-ciam-postgres
+        secretKey: username
+      database.password:
+        profile: vault-db-static
+        secretName: sit-ciam-postgres
+        secretKey: password

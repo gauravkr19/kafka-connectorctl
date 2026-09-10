@@ -1,0 +1,43 @@
+apiVersion: connectorctl.io/v1alpha1
+
+defaults:
+  concurrency: 2
+  maxConcurrency: 4
+  batchSize: 5
+
+adoption:
+  maxBatchSize: 5
+  allowWholeEnvironment: false
+  requireFunctionalDiff: true
+
+create:
+  requireDryRun: true
+  requireChangeTicket: false
+
+update:
+  requireDryRun: true
+  requireChangeTicket: false
+
+delete:
+  requireManualApproval: true
+  requireChangeTicket: true
+
+validation:
+  verifyPluginInstalled: true
+  validateAgainstConnectAPI: true
+  serverDryRun: false
+  rejectPlaintextSecrets: true
+
+  genericSensitivePatterns:
+    - '(?i)(^|[._-])(password|passwd|secret|token|api[._-]?key|private[._-]?key)([._-]|$)'
+
+operations:
+  allowed:
+    - status
+    - pause
+    - resume
+    - restart
+    - restart-task
+
+approvals:
+  poc: manual

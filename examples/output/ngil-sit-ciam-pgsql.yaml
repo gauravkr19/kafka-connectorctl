@@ -1,0 +1,35 @@
+apiVersion: platform.confluent.io/v1beta1
+kind: Connector
+metadata:
+  name: ngil-sit-ciam-pgsql
+  namespace: dev-datalake
+  labels:
+    app.kubernetes.io/managed-by: connectorctl
+    connectorctl.io/connect-profile: db-rotating
+    connectorctl.io/connector-plugin: postgres
+    connectorctl.io/logical-env: sit
+    connectorctl.io/physical-cluster: dev
+  annotations:
+    connectorctl.io/change-ticket: CHG000000
+    connectorctl.io/origin: adopted
+spec:
+  name: ngil-sit-ciam-pgsql
+  class: io.debezium.connector.postgresql.PostgresConnector
+  taskMax: 1
+  connectClusterRef:
+    name: connect-dev-db
+    namespace: dev-datalake
+  connectRest:
+    authentication:
+      bearer:
+        secretRef: v2-kafka-apikeys
+      type: bearer
+    endpoint: https://kafka-connect-db-dev.example.invalid
+  configs:
+    database.hostname: pgsql-sit.example.internal
+    database.password: ${file:/mnt/secrets/sit-ciam-postgres/custom.properties:password}
+    database.user: ${file:/mnt/secrets/sit-ciam-postgres/custom.properties:username}
+    topic.prefix: ciam
+  restartPolicy:
+    type: OnFailure
+    maxRetry: 10

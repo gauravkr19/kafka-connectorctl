@@ -1,0 +1,9 @@
+apiVersion: connectorctl.io/v1alpha1
+nameReplacements: []
+configReplacements:
+  - fields:
+      - database.hostname
+      - http.api.url
+    from: sit
+    to: e2e
+overrides: {}

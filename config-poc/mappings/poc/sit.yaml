@@ -1,0 +1,14 @@
+apiVersion: connectorctl.io/v1alpha1
+
+connectors:
+  ngil-sit-pg-lab:
+    fields:
+      database.user:
+        profile: mounted-file
+        secretName: postgres-credentials
+        secretKey: username
+
+      database.password:
+        profile: mounted-file
+        secretName: postgres-credentials
+        secretKey: password

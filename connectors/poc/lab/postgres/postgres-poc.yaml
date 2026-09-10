@@ -1,0 +1,46 @@
+apiVersion: platform.confluent.io/v1beta1
+kind: Connector
+metadata:
+  name: postgres-poc
+  namespace: confluent-poc
+  labels:
+    app.kubernetes.io/managed-by: connectorctl
+    connectorctl.io/connect-profile: default
+    connectorctl.io/connector-plugin: postgres
+    connectorctl.io/logical-env: lab
+    connectorctl.io/physical-cluster: poc
+  annotations:
+    connectorctl.io/origin: adopted
+spec:
+  name: postgres-poc
+  class: io.debezium.connector.postgresql.PostgresConnector
+  taskMax: 1
+  connectClusterRef:
+    name: connect
+    namespace: confluent-poc
+  configs:
+    database.dbname: appdb
+    database.hostname: postgres
+    database.password: ${file:/mnt/secrets/postgres-credentials/postgres.properties:password}
+    database.port: "5432"
+    database.user: ${file:/mnt/secrets/postgres-credentials/postgres.properties:username}
+    plugin.name: pgoutput
+    publication.autocreate.mode: filtered
+    publication.name: pgpoc_pub
+    schema.history.internal.consumer.sasl.jaas.config: ${file:/mnt/secrets/ccloud-credentials/schemahistory.properties:jaas}
+    schema.history.internal.consumer.sasl.mechanism: PLAIN
+    schema.history.internal.consumer.security.protocol: SASL_SSL
+    schema.history.internal.consumer.ssl.endpoint.identification.algorithm: https
+    schema.history.internal.kafka.bootstrap.servers: pkc-15v0n6.us-east5.gcp.confluent.cloud:9092
+    schema.history.internal.producer.sasl.jaas.config: ${file:/mnt/secrets/ccloud-credentials/schemahistory.properties:jaas}
+    schema.history.internal.producer.sasl.mechanism: PLAIN
+    schema.history.internal.producer.security.protocol: SASL_SSL
+    schema.history.internal.producer.ssl.endpoint.identification.algorithm: https
+    schema.include.list: public
+    slot.name: pgpoc_slot
+    snapshot.mode: initial
+    table.include.list: public.customers
+    topic.prefix: pgpoc
+  restartPolicy:
+    type: OnFailure
+    maxRetry: 5

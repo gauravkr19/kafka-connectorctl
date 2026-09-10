@@ -1,0 +1,38 @@
+apiVersion: connectorctl.io/v1alpha1
+plugins:
+  postgres:
+    classes:
+      - io.debezium.connector.postgresql.PostgresConnector
+    type: source
+    defaultConnectProfile: db-rotating
+    sensitive:
+      - database.user
+      - database.password
+      - database.sslpassword
+    sensitivePatterns:
+      - '(?i)^database\..*(password|secret|token)$'
+
+  oracle-cdc:
+    classes:
+      - io.debezium.connector.oracle.OracleConnector
+    type: source
+    defaultConnectProfile: db-rotating
+    sensitive:
+      - database.user
+      - database.password
+      - database.ssl.truststore.password
+      - database.ssl.keystore.password
+    sensitivePatterns:
+      - '(?i)^database\..*(password|secret|token)$'
+
+  http-sink:
+    classes:
+      - io.confluent.connect.http.HttpSinkConnector
+    type: sink
+    defaultConnectProfile: default
+    sensitivePatterns:
+      - '(?i).*(authorization|bearer|oauth).*'
+
+# Add the remaining exact classes returned by GET /connector-plugins before
+# bulk adoption. Unknown classes intentionally fail closed rather than being
+# placed in a misleading folder.

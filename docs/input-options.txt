@@ -1,0 +1,59 @@
+# Not expose platforms.yaml, Helm values, secret rules, connectClusterRef, etc. to users.
+
+Operation:
+    ADOPT
+    CREATE
+    UPDATE
+    DELETE
+    PAUSE
+    RESUME
+    RESTART
+    RESTART-TASK
+
+Physical Cluster:
+    DEV
+    PREPROD
+    PROD
+
+Logical Environment:
+    SIT
+    E2E
+    REG
+    ...
+
+Connector:
+    orders-postgres
+
+Config input:
+    required for CREATE / UPDATE
+
+Change Ticket:
+    CHG123456
+
+Dry Run:
+    true/false
+
+#######
+check input values:::
+------------------------
+Jenkins field
+   ↓
+CLI flag
+   ↓
+Options struct
+   ↓
+Service function
+   ↓
+Policy/validation check
+
+Example:::
+------------
+Change Ticket
+   ↓
+--ticket
+   ↓
+ChangeTicket string
+   ↓
+Service.Create / Service.Adopt
+   ↓
+RequireChangeTicket ?
