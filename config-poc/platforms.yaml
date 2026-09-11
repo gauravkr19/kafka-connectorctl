@@ -16,7 +16,7 @@ clusters:
       default:
         adoptionSource: true
         rest:
-          baseURL: http://127.0.0.1:8083
+          baseURL: http://connect.confluent-poc.svc.cluster.local:8083
           auth:
             type: basic
             usernameEnv: CONNECT_POC_USER
